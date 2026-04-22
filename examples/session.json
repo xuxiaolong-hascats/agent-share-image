@@ -1,0 +1,44 @@
+{
+  "sessionId": "example-session",
+  "events": [
+    {
+      "type": "user_message",
+      "text": "我想实现一个工具，将我和你的对话生成图片。"
+    },
+    {
+      "type": "assistant_text",
+      "text": "先区分两种路线：终端原样导出，或者结构化会话重绘。"
+    },
+    {
+      "type": "tool_summary",
+      "tool": "search_query",
+      "args": "q=\"Ray.so official\"",
+      "result": "找到 3 条相关结果"
+    },
+    {
+      "type": "assistant_text",
+      "text": "如果目标是分享图，建议走结构化会话重绘。"
+    },
+    {
+      "type": "commentary",
+      "text": "这条 commentary 不会出现在最终图片中。"
+    },
+    {
+      "type": "user_message",
+      "text": "第二种，结构化会话，自定义渲染，不用保留 cli 里的样式，但是对话内容不能丢。"
+    },
+    {
+      "type": "assistant_text",
+      "text": "可以，默认只保留 user、assistant、code/tool 摘要三层信息。"
+    },
+    {
+      "type": "assistant_code",
+      "language": "bash",
+      "code": "/share round=2"
+    },
+    {
+      "type": "assistant_text",
+      "text": "如果超出单图安全高度，就直接报错，不自动分页。"
+    }
+  ]
+}

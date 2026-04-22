@@ -1,0 +1,6 @@
+{"timestamp":"2026-04-21T12:00:00.000Z","type":"session_meta","payload":{"id":"codex-example-session"}}
+{"timestamp":"2026-04-21T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"我想把最近一轮对话导出成图片。"}}
+{"timestamp":"2026-04-21T12:00:02.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"可以，建议保留 user、assistant 和 tool 摘要三层信息。"}]}}
+{"timestamp":"2026-04-21T12:00:03.000Z","type":"response_item","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"rg -n \\\"share\\\" src\"}","call_id":"call_demo_1"}}
+{"timestamp":"2026-04-21T12:00:04.000Z","type":"event_msg","payload":{"type":"exec_command_end","call_id":"call_demo_1","aggregated_output":"src/cli.ts:10:printUsage\nsrc/renderer.tsx:220:renderPayloadToSvg","status":"completed"}}
+{"timestamp":"2026-04-21T12:00:05.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"命令已经跑完，可以直接导出。```bash\nagent-share-image --input session.jsonl --round 1 --output share.svg\n```"}]}}

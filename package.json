@@ -1,0 +1,57 @@
+{
+  "name": "@hascats/agent-share-image",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Generate shareable SVG or PNG images from agent conversation rounds.",
+  "author": "xuxiaolong-hascats",
+  "bin": {
+    "agent-share-image": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "skills"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "render:example": "tsx src/cli.ts --input examples/session.json --round 2 --output output/share-example.svg"
+  },
+  "keywords": [
+    "agent",
+    "cli",
+    "codex",
+    "conversation",
+    "image",
+    "svg",
+    "png"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xuxiaolong-hascats/agent-share-image.git"
+  },
+  "homepage": "https://github.com/xuxiaolong-hascats/agent-share-image#readme",
+  "bugs": {
+    "url": "https://github.com/xuxiaolong-hascats/agent-share-image/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.6",
+    "@fontsource/noto-sans-sc": "^5.2.6",
+    "@resvg/resvg-js": "^2.6.2",
+    "react": "^19.2.0",
+    "satori": "^0.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@types/react": "^19.2.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
