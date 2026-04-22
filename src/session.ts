@@ -47,15 +47,7 @@ export function dropLatestRound(events: SessionEvent[]): SessionEvent[] {
   return events.slice(0, lastUserIndex);
 }
 
-export function extractSharePayload(
-  events: SessionEvent[],
-  roundCount: number,
-  sessionId = "local-session",
-): SharePayload {
-  if (!Number.isInteger(roundCount) || roundCount <= 0) {
-    throw new Error("round must be a positive integer");
-  }
-
+export function extractCompleteRounds(events: SessionEvent[]): ShareRound[] {
   const rounds: ShareRound[] = [];
   let currentRound: ShareRound | null = null;
 
@@ -105,15 +97,36 @@ export function extractSharePayload(
     }
   }
 
-  const selectedRounds = rounds.slice(-roundCount);
-  if (selectedRounds.length === 0) {
+  return rounds;
+}
+
+export function buildSharePayload(
+  rounds: ShareRound[],
+  sessionId = "local-session",
+): SharePayload {
+  if (rounds.length === 0) {
     throw new Error("no complete rounds available for export");
   }
 
   return {
     sessionId,
     createdAt: new Date().toISOString(),
-    roundCount: selectedRounds.length,
-    rounds: selectedRounds,
+    roundCount: rounds.length,
+    rounds,
   };
+}
+
+export function extractSharePayload(
+  events: SessionEvent[],
+  roundCount: number,
+  sessionId = "local-session",
+): SharePayload {
+  if (!Number.isInteger(roundCount) || roundCount <= 0) {
+    throw new Error("round must be a positive integer");
+  }
+
+  const rounds = extractCompleteRounds(events);
+
+  const selectedRounds = rounds.slice(-roundCount);
+  return buildSharePayload(selectedRounds, sessionId);
 }

@@ -1,12 +1,12 @@
 {
   "name": "@hascats/agent-share-image",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "description": "Generate shareable SVG or PNG images from agent conversation rounds.",
   "author": "xuxiaolong-hascats",
   "bin": {
-    "agent-share-image": "./dist/cli.js"
+    "agent-share-image": "dist/cli.js"
   },
   "files": [
     "dist",

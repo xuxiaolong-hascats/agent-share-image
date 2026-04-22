@@ -49,6 +49,20 @@ agent-share-image --input examples/session.json --round 1 --output output/share.
 agent-share-image --current --round 2
 ```
 
+### List selectable rounds
+
+```bash
+agent-share-image --current --list
+```
+
+### Export selected rounds
+
+```bash
+agent-share-image --current --select 3-7 --output output/share.svg
+agent-share-image --current --select 1,3,5 --output output/share.svg
+agent-share-image --current --select all --output output/share.svg
+```
+
 ### Export PNG
 
 ```bash
@@ -65,16 +79,22 @@ pnpm render:example
 
 - `--input <path>`: session file path
 - `--current`: resolve the current Codex session from runtime context
+- `--list`: print selectable complete rounds with numbered previews
+- `--select <expr>`: export selected rounds by index, such as `3`, `3-7`, `1,3,5`, or `all`
+- `--limit <n>`: when used with `--list`, show only the latest `n` complete rounds while keeping global numbering
 - `--round <n>`: export the latest `n` completed Q&A rounds from one session
 - `--output <path>`: output file path, defaults to `output/share.svg`
 
 ## Semantics
 
 - `round=n` means the latest `n` Q&A rounds inside one session, not `n` sessions
+- `select=<expr>` exports explicit rounds from one session instead of slicing from the latest round
+- `--list` prints one line per complete round in the form `N. U: ... | A: ...`
 - In normal extraction, unfinished tail rounds are ignored
 - With `--current`, the current export-trigger round is excluded by default
 - Raw `commentary`, source details, and original tool logs are excluded from visual output
 - The renderer currently shows `user`, `assistant`, and `code`; `tool_summary` is kept internally but not rendered
+- `--round`, `--select`, and `--list` are mutually exclusive
 
 ## Input Formats
 

@@ -35,10 +35,7 @@ export function dropLatestRound(events) {
     }
     return events.slice(0, lastUserIndex);
 }
-export function extractSharePayload(events, roundCount, sessionId = "local-session") {
-    if (!Number.isInteger(roundCount) || roundCount <= 0) {
-        throw new Error("round must be a positive integer");
-    }
+export function extractCompleteRounds(events) {
     const rounds = [];
     let currentRound = null;
     for (const event of events) {
@@ -85,14 +82,24 @@ export function extractSharePayload(events, roundCount, sessionId = "local-sessi
             rounds.push(finalized);
         }
     }
-    const selectedRounds = rounds.slice(-roundCount);
-    if (selectedRounds.length === 0) {
+    return rounds;
+}
+export function buildSharePayload(rounds, sessionId = "local-session") {
+    if (rounds.length === 0) {
         throw new Error("no complete rounds available for export");
     }
     return {
         sessionId,
         createdAt: new Date().toISOString(),
-        roundCount: selectedRounds.length,
-        rounds: selectedRounds,
+        roundCount: rounds.length,
+        rounds,
     };
+}
+export function extractSharePayload(events, roundCount, sessionId = "local-session") {
+    if (!Number.isInteger(roundCount) || roundCount <= 0) {
+        throw new Error("round must be a positive integer");
+    }
+    const rounds = extractCompleteRounds(events);
+    const selectedRounds = rounds.slice(-roundCount);
+    return buildSharePayload(selectedRounds, sessionId);
 }

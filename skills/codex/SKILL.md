@@ -20,7 +20,7 @@ agent-share-image
 ## Command
 
 ```bash
-agent-share-image (--input <session.json|session.jsonl> | --current) --round <n> [--output <file.svg|file.png>]
+agent-share-image (--input <session.json|session.jsonl> | --current) [--round <n> | --select <expr> | --list] [--limit <n>] [--output <file.svg|file.png>]
 ```
 
 ## Rules
@@ -29,6 +29,8 @@ agent-share-image (--input <session.json|session.jsonl> | --current) --round <n>
 - Do not scan archived sessions to guess the intended session
 - Use `--input` only when the user explicitly points to a file
 - `round=n` means the latest `n` Q&A rounds inside one session, not `n` sessions
+- If the user says “上面的会话 / 前面那几段 / 这些对话”, run `--list` first and let the user choose indices
+- Prefer `--select` over guessing a `round=n` when the user refers to a non-latest subset
 - With `--current`, the export-trigger round is excluded by default
 - If no output path is specified, the CLI defaults to `output/share.svg`
 
@@ -38,6 +40,18 @@ Current Codex session:
 
 ```bash
 agent-share-image --current --round 1
+```
+
+List selectable rounds in the current session:
+
+```bash
+agent-share-image --current --list
+```
+
+Export explicitly selected rounds:
+
+```bash
+agent-share-image --current --select 3-5 --output output/share.svg
 ```
 
 Specific session file:

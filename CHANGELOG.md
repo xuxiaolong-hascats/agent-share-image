@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- Add `--list` to preview selectable complete Q&A rounds
+- Add `--select` to export explicit rounds by index, range, list, or `all`
+- Add `--limit` for bounded round listing while keeping global numbering
+- Keep `--round` as a shortcut for latest-round export
+- Update Codex and Claude Code skill guidance to use list-then-select for ambiguous requests
+
 ## 0.1.0
 
 - Initial public release of the `agent-share-image` CLI
