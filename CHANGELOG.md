@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Render common Markdown formatting in assistant text blocks for share cards
+- Preserve readable styling for headings, lists, quotes, bold text, inline code, and link text
+
 ## 0.2.0
 
 - Add `--list` to preview selectable complete Q&A rounds

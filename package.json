@@ -1,6 +1,6 @@
 {
   "name": "@hascats/agent-share-image",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "type": "module",
   "description": "Generate shareable SVG or PNG images from agent conversation rounds.",
