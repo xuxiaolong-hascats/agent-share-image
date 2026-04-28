@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
+import { Fragment } from "react";
 import { loadFonts } from "./fonts.js";
 const WIDTH = 1200;
 const PADDING = 48;
@@ -113,9 +114,63 @@ const styles = {
         color: colors.assistantMeta,
     },
     text: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+    },
+    paragraph: {
+        display: "flex",
+        flexWrap: "wrap",
         fontSize: "24px",
         lineHeight: 1.6,
         whiteSpace: "pre-wrap",
+    },
+    heading1: {
+        display: "flex",
+        flexWrap: "wrap",
+        fontSize: "30px",
+        lineHeight: 1.35,
+        fontWeight: 700,
+    },
+    heading2: {
+        display: "flex",
+        flexWrap: "wrap",
+        fontSize: "27px",
+        lineHeight: 1.4,
+        fontWeight: 700,
+    },
+    heading3: {
+        display: "flex",
+        flexWrap: "wrap",
+        fontSize: "25px",
+        lineHeight: 1.45,
+        fontWeight: 700,
+    },
+    listRow: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "10px",
+    },
+    listBullet: {
+        fontSize: "24px",
+        lineHeight: 1.6,
+        color: colors.assistantMeta,
+    },
+    quote: {
+        display: "flex",
+        paddingLeft: "14px",
+        borderLeft: `3px solid ${colors.glassBorder}`,
+        color: colors.assistantMeta,
+    },
+    inlineCode: {
+        display: "flex",
+        fontFamily: '"JetBrains Mono"',
+        fontSize: "20px",
+        lineHeight: 1.45,
+        background: "rgba(15,23,42,0.9)",
+        border: `1px solid ${colors.codeBorder}`,
+        borderRadius: "8px",
+        padding: "2px 8px",
     },
     mono: {
         fontFamily: '"JetBrains Mono"',
@@ -138,9 +193,72 @@ function clampCode(code, maxLines = 18) {
     }
     return `${lines.slice(0, maxLines).join("\n")}\n...`;
 }
+function renderInlineMarkdown(text, keyPrefix) {
+    const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
+    return parts.filter(Boolean).map((part, index) => {
+        if (part.startsWith("`") && part.endsWith("`")) {
+            return (_jsx("span", { style: styles.inlineCode, children: part.slice(1, -1) }, `${keyPrefix}-code-${index}`));
+        }
+        if (part.startsWith("**") && part.endsWith("**")) {
+            return (_jsx("span", { style: { fontWeight: 700 }, children: part.slice(2, -2) }, `${keyPrefix}-bold-${index}`));
+        }
+        const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (linkMatch) {
+            return (_jsx("span", { style: { textDecoration: "underline", textDecorationColor: "rgba(147,197,253,0.85)" }, children: linkMatch[1] }, `${keyPrefix}-link-${index}`));
+        }
+        return _jsx(Fragment, { children: part }, `${keyPrefix}-text-${index}`);
+    });
+}
+function renderMarkdownText(text, keyPrefix) {
+    const lines = text.split("\n");
+    const nodes = [];
+    let paragraph = [];
+    const flushParagraph = () => {
+        if (paragraph.length === 0) {
+            return;
+        }
+        const content = paragraph.join("\n");
+        const nodeIndex = nodes.length;
+        nodes.push(_jsx("div", { style: styles.paragraph, children: renderInlineMarkdown(content, `${keyPrefix}-p-${nodeIndex}`) }, `${keyPrefix}-p-${nodeIndex}`));
+        paragraph = [];
+    };
+    lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            flushParagraph();
+            return;
+        }
+        const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)$/);
+        if (headingMatch) {
+            flushParagraph();
+            const level = headingMatch[1].length;
+            const headingStyle = level === 1 ? styles.heading1 : level === 2 ? styles.heading2 : styles.heading3;
+            const nodeIndex = nodes.length;
+            nodes.push(_jsx("div", { style: headingStyle, children: renderInlineMarkdown(headingMatch[2], `${keyPrefix}-h-${nodeIndex}`) }, `${keyPrefix}-h-${nodeIndex}`));
+            return;
+        }
+        const quoteMatch = trimmed.match(/^>\s+(.+)$/);
+        if (quoteMatch) {
+            flushParagraph();
+            const nodeIndex = nodes.length;
+            nodes.push(_jsx("div", { style: styles.quote, children: _jsx("div", { style: styles.paragraph, children: renderInlineMarkdown(quoteMatch[1], `${keyPrefix}-q-${nodeIndex}`) }) }, `${keyPrefix}-q-${nodeIndex}`));
+            return;
+        }
+        const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.+)$/);
+        if (listMatch) {
+            flushParagraph();
+            const nodeIndex = nodes.length;
+            nodes.push(_jsxs("div", { style: styles.listRow, children: [_jsx("div", { style: styles.listBullet, children: listMatch[2] }), _jsx("div", { style: styles.paragraph, children: renderInlineMarkdown(listMatch[3], `${keyPrefix}-li-${nodeIndex}`) })] }, `${keyPrefix}-li-${nodeIndex}`));
+            return;
+        }
+        paragraph.push(line);
+    });
+    flushParagraph();
+    return nodes;
+}
 function renderAssistantBlock(block, index) {
     if (block.type === "text") {
-        return (_jsx("div", { style: styles.leftRow, children: _jsxs("div", { style: styles.assistantBubble, children: [_jsx("div", { style: styles.meta, children: "ASSISTANT" }), _jsx("div", { style: styles.text, children: block.text })] }) }, `text-${index}`));
+        return (_jsx("div", { style: styles.leftRow, children: _jsxs("div", { style: styles.assistantBubble, children: [_jsx("div", { style: styles.meta, children: "ASSISTANT" }), _jsx("div", { style: styles.text, children: renderMarkdownText(block.text, `text-${index}`) })] }) }, `text-${index}`));
     }
     if (block.type === "code") {
         return (_jsx("div", { style: styles.leftRow, children: _jsxs("div", { style: styles.codeCard, children: [_jsx("div", { style: { ...styles.label, color: colors.codeLabel }, children: block.language ? `CODE · ${block.language}` : "CODE" }), _jsx("div", { style: styles.mono, children: clampCode(block.code) })] }) }, `code-${index}`));

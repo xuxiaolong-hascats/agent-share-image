@@ -1,6 +1,6 @@
 import satori, { type SatoriOptions } from "satori";
 import { Resvg } from "@resvg/resvg-js";
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { loadFonts } from "./fonts.js";
 import type { AssistantBlock, SharePayload, ShareRound } from "./types.js";
 
@@ -117,9 +117,63 @@ const styles = {
     color: colors.assistantMeta,
   } satisfies CSSProperties,
   text: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  } satisfies CSSProperties,
+  paragraph: {
+    display: "flex",
+    flexWrap: "wrap",
     fontSize: "24px",
     lineHeight: 1.6,
     whiteSpace: "pre-wrap",
+  } satisfies CSSProperties,
+  heading1: {
+    display: "flex",
+    flexWrap: "wrap",
+    fontSize: "30px",
+    lineHeight: 1.35,
+    fontWeight: 700,
+  } satisfies CSSProperties,
+  heading2: {
+    display: "flex",
+    flexWrap: "wrap",
+    fontSize: "27px",
+    lineHeight: 1.4,
+    fontWeight: 700,
+  } satisfies CSSProperties,
+  heading3: {
+    display: "flex",
+    flexWrap: "wrap",
+    fontSize: "25px",
+    lineHeight: 1.45,
+    fontWeight: 700,
+  } satisfies CSSProperties,
+  listRow: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+  } satisfies CSSProperties,
+  listBullet: {
+    fontSize: "24px",
+    lineHeight: 1.6,
+    color: colors.assistantMeta,
+  } satisfies CSSProperties,
+  quote: {
+    display: "flex",
+    paddingLeft: "14px",
+    borderLeft: `3px solid ${colors.glassBorder}`,
+    color: colors.assistantMeta,
+  } satisfies CSSProperties,
+  inlineCode: {
+    display: "flex",
+    fontFamily: '"JetBrains Mono"',
+    fontSize: "20px",
+    lineHeight: 1.45,
+    background: "rgba(15,23,42,0.9)",
+    border: `1px solid ${colors.codeBorder}`,
+    borderRadius: "8px",
+    padding: "2px 8px",
   } satisfies CSSProperties,
   mono: {
     fontFamily: '"JetBrains Mono"',
@@ -144,13 +198,126 @@ function clampCode(code: string, maxLines = 18) {
   return `${lines.slice(0, maxLines).join("\n")}\n...`;
 }
 
+function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
+  return parts.filter(Boolean).map((part, index) => {
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <span key={`${keyPrefix}-code-${index}`} style={styles.inlineCode}>
+          {part.slice(1, -1)}
+        </span>
+      );
+    }
+
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <span key={`${keyPrefix}-bold-${index}`} style={{ fontWeight: 700 }}>
+          {part.slice(2, -2)}
+        </span>
+      );
+    }
+
+    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (linkMatch) {
+      return (
+        <span
+          key={`${keyPrefix}-link-${index}`}
+          style={{ textDecoration: "underline", textDecorationColor: "rgba(147,197,253,0.85)" }}
+        >
+          {linkMatch[1]}
+        </span>
+      );
+    }
+
+    return <Fragment key={`${keyPrefix}-text-${index}`}>{part}</Fragment>;
+  });
+}
+
+function renderMarkdownText(text: string, keyPrefix: string): ReactNode[] {
+  const lines = text.split("\n");
+  const nodes: ReactNode[] = [];
+  let paragraph: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length === 0) {
+      return;
+    }
+
+    const content = paragraph.join("\n");
+    const nodeIndex = nodes.length;
+    nodes.push(
+      <div key={`${keyPrefix}-p-${nodeIndex}`} style={styles.paragraph}>
+        {renderInlineMarkdown(content, `${keyPrefix}-p-${nodeIndex}`)}
+      </div>,
+    );
+    paragraph = [];
+  };
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      return;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)$/);
+    if (headingMatch) {
+      flushParagraph();
+      const level = headingMatch[1].length;
+      const headingStyle =
+        level === 1 ? styles.heading1 : level === 2 ? styles.heading2 : styles.heading3;
+      const nodeIndex = nodes.length;
+      nodes.push(
+        <div key={`${keyPrefix}-h-${nodeIndex}`} style={headingStyle}>
+          {renderInlineMarkdown(headingMatch[2], `${keyPrefix}-h-${nodeIndex}`)}
+        </div>,
+      );
+      return;
+    }
+
+    const quoteMatch = trimmed.match(/^>\s+(.+)$/);
+    if (quoteMatch) {
+      flushParagraph();
+      const nodeIndex = nodes.length;
+      nodes.push(
+        <div key={`${keyPrefix}-q-${nodeIndex}`} style={styles.quote}>
+          <div style={styles.paragraph}>
+            {renderInlineMarkdown(quoteMatch[1], `${keyPrefix}-q-${nodeIndex}`)}
+          </div>
+        </div>,
+      );
+      return;
+    }
+
+    const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.+)$/);
+    if (listMatch) {
+      flushParagraph();
+      const nodeIndex = nodes.length;
+      nodes.push(
+        <div key={`${keyPrefix}-li-${nodeIndex}`} style={styles.listRow}>
+          <div style={styles.listBullet}>{listMatch[2]}</div>
+          <div style={styles.paragraph}>
+            {renderInlineMarkdown(listMatch[3], `${keyPrefix}-li-${nodeIndex}`)}
+          </div>
+        </div>,
+      );
+      return;
+    }
+
+    paragraph.push(line);
+  });
+
+  flushParagraph();
+  return nodes;
+}
+
 function renderAssistantBlock(block: AssistantBlock, index: number) {
   if (block.type === "text") {
     return (
       <div key={`text-${index}`} style={styles.leftRow}>
         <div style={styles.assistantBubble}>
           <div style={styles.meta}>ASSISTANT</div>
-          <div style={styles.text}>{block.text}</div>
+          <div style={styles.text}>{renderMarkdownText(block.text, `text-${index}`)}</div>
         </div>
       </div>
     );
